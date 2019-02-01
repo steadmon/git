@@ -167,8 +167,10 @@ This option is only applicable in non-verbose mode.
 	When in list mode,
 	show sha1 and commit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
-	the name of the upstream branch, as well (see also `git remote
-	show <remote>`).
+	the path of the linked worktree, if applicable (not applicable
+	for main worktree since user's path will already be in main
+	worktree) and the name of the upstream branch, as well (see also
+	`git remote show <remote>`).
 
 -q::
 --quiet::
