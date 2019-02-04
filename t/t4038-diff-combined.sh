@@ -435,4 +435,51 @@ test_expect_success 'combine diff gets tree sorting right' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup for --combined-with-paths' '
+	git branch side1c &&
+	git branch side2c &&
+	git checkout side1c &&
+	test_seq 1 10 >$(printf "file\twith\ttabs") &&
+	git add file* &&
+	git commit -m with &&
+	git checkout side2c &&
+	test_seq 1 9 >$(printf "i\tam\ttabbed") &&
+	echo ten >>$(printf "i\tam\ttabbed") &&
+	git add *tabbed &&
+	git commit -m iam &&
+	git checkout -b mergery side1c &&
+	git merge --no-commit side2c &&
+	git rm *tabs &&
+	echo eleven >>$(printf "i\tam\ttabbed") &&
+	git mv "$(printf "i\tam\ttabbed")" "$(printf "fickle\tnaming")" &&
+	git add fickle* &&
+	git commit
+'
+
+test_expect_success '--combined-all-names and --raw' '
+	cat <<-\EOF >expect &&
+	::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR	"file\twith\ttabs"	"i\tam\ttabbed"	"fickle\tnaming"
+	EOF
+	git diff-tree -c -M --raw --combined-all-names HEAD >actual.tmp &&
+	sed 1d <actual.tmp >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--combined-all-names and --raw -and -z' '
+	printf "0f9645804ebb04cc3eef91f799eb7fb54d70cefb\0::100644 100644 100644 f00c965d8307308469e537302baa73048488f162 088bd5d92c2a8e0203ca8e7e4c2a5c692f6ae3f7 333b9c62519f285e1854830ade0fe1ef1d40ee1b RR\0file\twith\ttabs\0i\tam\ttabbed\0fickle\tnaming\0" >expect &&
+	git diff-tree -c -M --raw --combined-all-names -z HEAD >actual &&
+	test_cmp -a expect actual
+'
+
+test_expect_success '--combined-all-names and --cc' '
+	cat <<-\EOF >expect &&
+	--- "a/file\twith\ttabs"
+	--- "a/i\tam\ttabbed"
+	+++ "b/fickle\tnaming"
+	EOF
+	git diff-tree --cc -M --combined-all-names HEAD >actual.tmp &&
+	grep ^[-+][-+][-+] <actual.tmp >actual &&
+	test_cmp expect actual
+'
+
 test_done
