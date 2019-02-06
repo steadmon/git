@@ -155,7 +155,7 @@ int repo_init(struct repository *repo,
 	      const char *gitdir,
 	      const char *worktree)
 {
-	struct repository_format format;
+	struct repository_format format = REPOSITORY_FORMAT_INIT;
 	memset(repo, 0, sizeof(*repo));
 
 	repo->objects = raw_object_store_new();
@@ -172,6 +172,7 @@ int repo_init(struct repository *repo,
 	if (worktree)
 		repo_set_worktree(repo, worktree);
 
+	clear_repository_format(&format);
 	return 0;
 
 error:
