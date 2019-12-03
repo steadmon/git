@@ -6,8 +6,11 @@
 
 struct hook {
 	struct list_head list;
-	/* The path to the hook */
-	const char *hook_path;
+	/*
+	 * The friendly name of the hook. NULL indicates the hook is from the
+	 * hookdir.
+	 */
+	char *name;
 
 	/*
 	 * Use this to keep state for your feed_pipe_fn if you are using
@@ -118,6 +121,7 @@ struct hook_cb_data {
 	struct list_head *head;
 	struct hook *run_me;
 	struct run_hooks_opt *options;
+	struct repository *repository;
 };
 
 /*
