@@ -218,8 +218,30 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 	strvec_clear(&options->args);
 }
 
+/*
+ * Determines how many jobs to use after we know we want to parallelize. First
+ * priority is the config 'hook.jobs' and second priority is the number of CPUs.
+ */
+static int configured_hook_jobs(struct repository *r)
+{
+	/*
+	 * The config and the CPU count probably won't change during the process
+	 * lifetime, so cache the result in case we invoke multiple hooks during
+	 * one process.
+	 */
+	static int jobs = 0;
+	if (jobs)
+		return jobs;
+
+	if (repo_config_get_int(r, "hook.jobs", &jobs))
+		/* if the config isn't set, fall back to CPU count. */
+		jobs = online_cpus();
+
+	return jobs;
+}
+
 int run_hooks_opt(struct repository *r, const char *hook_name,
-		  struct run_hooks_opt *options)
+		   struct run_hooks_opt *options)
 {
 	struct strbuf abs_path = STRBUF_INIT;
 	int ret = 0;
@@ -264,11 +286,16 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		goto cleanup;
 	}
 
-	cb_data.hook_name = hook_name;
-	if (options->dir) {
-		strbuf_add_absolute_path(&abs_path, hook_name);
-		cb_data.hook_name = abs_path.buf;
-	}
+	/* INIT_PARALLEL sets jobs to 0, so go look up how many to use. */
+	if (!options->jobs)
+		options->jobs = configured_hook_jobs(r);
+
+	/*
+	 * If it's single-threaded, or if there's only one hook to run, then we
+	 * can ungroup the output.
+	 */
+	opts.ungroup = options->jobs == 1 ||
+		       cb_data.run_me->list.next == cb_data.head;
 
 	run_processes_parallel(&opts);
 	ret = cb_data.rc;
@@ -281,14 +308,14 @@ cleanup:
 
 int run_hooks(struct repository *r, const char *hook_name)
 {
-	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_PARALLEL;
 
 	return run_hooks_opt(r, hook_name, &opt);
 }
 
 int run_hooks_l(struct repository *r, const char *hook_name, ...)
 {
-	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_PARALLEL;
 	va_list ap;
 	const char *arg;
 
