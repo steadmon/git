@@ -2,8 +2,27 @@
 #define HOOK_H
 #include "strvec.h"
 #include "run-command.h"
+#include "list.h"
+
+struct hook {
+	struct list_head list;
+	/* The path to the hook */
+	const char *hook_path;
+
+	/*
+	 * Use this to keep state for your feed_pipe_fn if you are using
+	 * run_hooks_opt.feed_pipe. Otherwise, do not touch it.
+	 */
+	void *feed_pipe_cb_data;
+};
 
 struct repository;
+
+/*
+ * Provides a linked list of 'struct hook' detailing commands which should run
+ * in response to the 'hookname' event, in execution order.
+ */
+struct list_head *list_hooks(struct repository *r, const char *hookname);
 
 struct run_hooks_opt
 {
@@ -53,12 +72,6 @@ struct run_hooks_opt
 	void *feed_pipe_ctx;
 
 	/*
-	 * Use this to keep state for your feed_pipe_fn if you are using
-	 * run_hooks_opt.feed_pipe. Otherwise, do not touch it.
-	 */
-	void *feed_pipe_cb_data;
-
-	/*
 	 * Populate this to capture output and prevent it from being printed to
 	 * stderr. This will be passed directly through to
 	 * run_command:run_parallel_processes(). See t/helper/test-run-command.c
@@ -87,7 +100,8 @@ struct hook_cb_data {
 	/* rc reflects the cumulative failure state */
 	int rc;
 	const char *hook_name;
-	const char *hook_path;
+	struct list_head *head;
+	struct hook *run_me;
 	struct run_hooks_opt *options;
 };
 
@@ -130,4 +144,10 @@ int run_hooks(struct repository *r, const char *hook_name);
  */
 LAST_ARG_MUST_BE_NULL
 int run_hooks_l(struct repository *r, const char *hook_name, ...);
+/*
+ * Frees the list at 'head', calling 'free_hook()' on each entry and freeing the
+ * list_head struct
+ */
+void clear_hook_list(struct list_head *head);
+
 #endif
