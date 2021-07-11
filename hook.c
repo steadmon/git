@@ -90,9 +90,8 @@ struct list_head *list_hooks(struct repository *r, const char *hookname)
 		BUG("null hookname was provided to hook_list()!");
 
 	if (have_git_dir()) {
-		const char *hook_path = find_hook(r, hookname);
-
 		/* Add the hook from the hookdir */
+		const char *hook_path = find_hook(r, hookname);
 		if (hook_path) {
 			struct hook *to_add = xmalloc(sizeof(*to_add));
 			to_add->hook_path = hook_path;

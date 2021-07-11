@@ -9,9 +9,12 @@
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] [(-j|--jobs) <n>]\n"\
 	   "<hook-name> [-- <hook-args>]")
+#define BUILTIN_HOOK_LIST_USAGE \
+	N_("git hook list <hook-name>")
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
+	BUILTIN_HOOK_LIST_USAGE,
 	NULL
 };
 
@@ -20,6 +23,50 @@ static const char * const builtin_hook_run_usage[] = {
 	NULL
 };
 
+static const char *const builtin_hook_list_usage[] = {
+	BUILTIN_HOOK_LIST_USAGE,
+	NULL
+};
+
+static int list(int argc, const char **argv, const char *prefix,
+		 struct repository *repo UNUSED)
+{
+	struct list_head *head, *pos;
+	const char *hookname = NULL;
+
+	struct option list_options[] = {
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, list_options,
+			     builtin_hook_list_usage, 0);
+
+	/*
+	 * The only unnamed argument provided should be the hook-name; if we add
+	 * arguments later they probably should be caught by parse_options.
+	 */
+	if (argc != 1)
+		usage_msg_opt(_("You must specify a hook event name to list."),
+			      builtin_hook_list_usage, list_options);
+
+	hookname = argv[0];
+
+	head = list_hooks(the_repository, hookname);
+
+	if (list_empty(head))
+		return 1;
+
+	list_for_each(pos, head) {
+		struct hook *item = list_entry(pos, struct hook, list);
+		item = list_entry(pos, struct hook, list);
+		if (item)
+			printf("%s\n", item->hook_path);
+	}
+
+	clear_hook_list(head);
+
+	return 0;
+}
 static int run(int argc, const char **argv, const char *prefix,
 	       struct repository *repo UNUSED)
 {
@@ -79,6 +126,7 @@ int cmd_hook(int argc,
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {
 		OPT_SUBCOMMAND("run", &fn, run),
+		OPT_SUBCOMMAND("list", &fn, list),
 		OPT_END(),
 	};
 
