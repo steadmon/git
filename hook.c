@@ -171,6 +171,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
 		.feed_pipe = options->feed_pipe,
+		.consume_sideband = options->consume_sideband,
 		.task_finished = notify_hook_finished,
 
 		.data = &cb_data,
@@ -181,6 +182,9 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;
+
+	if (options->path_to_stdin && options->feed_pipe)
+		BUG("choose only one method to populate stdin");
 
 	if (!hook_path && !options->error_if_missing)
 		goto cleanup;
