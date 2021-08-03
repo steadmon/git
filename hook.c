@@ -52,6 +52,30 @@ int hook_exists(struct repository *r, const char *name)
 	return !!find_hook(r, name);
 }
 
+int pipe_from_string_list(struct strbuf *pipe, void *pp_cb, void *pp_task_cb UNUSED)
+{
+	struct hook_cb_data *hook_cb = pp_cb;
+	struct string_list *to_pipe = hook_cb->options->feed_pipe_ctx;
+	unsigned int *item_idx;
+
+	/* Bootstrap the state manager if necessary. */
+	if (!hook_cb->options->feed_pipe_cb_data) {
+		hook_cb->options->feed_pipe_cb_data = xmalloc(sizeof(unsigned int));
+		*(unsigned int*)hook_cb->options->feed_pipe_cb_data = 0;
+	}
+	item_idx = hook_cb->options->feed_pipe_cb_data;
+
+	if (*item_idx < to_pipe->nr) {
+		strbuf_addf(pipe, "%s\n", to_pipe->items[*item_idx].string);
+		(*item_idx)++;
+		return 0;
+	} else {
+		free(item_idx);
+	}
+
+	return 1;
+}
+
 static int pick_next_hook(struct child_process *cp,
 			  struct strbuf *out UNUSED,
 			  void *pp_cb,
@@ -69,6 +93,12 @@ static int pick_next_hook(struct child_process *cp,
 	if (hook_cb->options->path_to_stdin) {
 		cp->no_stdin = 0;
 		cp->in = xopen(hook_cb->options->path_to_stdin, O_RDONLY);
+	} else if (hook_cb->options->feed_pipe) {
+		/* ask for start_command() to make a pipe for us */
+		cp->in = -1;
+		cp->no_stdin = 0;
+	} else {
+		cp->no_stdin = 1;
 	}
 	cp->stdout_to_stderr = 1;
 	cp->trace2_hook_name = hook_cb->hook_name;
@@ -140,6 +170,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
+		.feed_pipe = options->feed_pipe,
 		.task_finished = notify_hook_finished,
 
 		.data = &cb_data,
