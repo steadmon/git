@@ -2316,33 +2316,21 @@ int ref_update_reject_duplicates(struct string_list *refnames,
 static int run_transaction_hook(struct ref_transaction *transaction,
 				const char *state)
 {
-	struct child_process proc = CHILD_PROCESS_INIT;
-	struct strbuf buf = STRBUF_INIT;
-	const char *hook;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct string_list to_stdin = STRING_LIST_INIT_NODUP;
 	int ret = 0, i;
 
-	hook = find_hook(transaction->ref_store->repo, "reference-transaction");
-	if (!hook)
+	if (!hook_exists(transaction->ref_store->repo, "reference-transaction"))
 		return ret;
 
-	strvec_pushl(&proc.args, hook, state, NULL);
-	proc.in = -1;
-	proc.stdout_to_stderr = 1;
-	proc.trace2_hook_name = "reference-transaction";
-
-	ret = start_command(&proc);
-	if (ret)
-		return ret;
-
-	sigchain_push(SIGPIPE, SIG_IGN);
+	strvec_push(&opt.args, state);
 
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
+		struct strbuf buf = STRBUF_INIT;
 
 		if (update->flags & REF_LOG_ONLY)
 			continue;
-
-		strbuf_reset(&buf);
 
 		if (!(update->flags & REF_HAVE_OLD))
 			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
@@ -2358,23 +2346,17 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 		else
 			strbuf_addf(&buf, "%s ", oid_to_hex(&update->new_oid));
 
-		strbuf_addf(&buf, "%s\n", update->refname);
-
-		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
-			if (errno != EPIPE) {
-				/* Don't leak errno outside this API */
-				errno = 0;
-				ret = -1;
-			}
-			break;
-		}
+		strbuf_addf(&buf, "%s", update->refname);
+		string_list_append(&to_stdin, strbuf_detach(&buf, NULL));
 	}
 
-	close(proc.in);
-	sigchain_pop(SIGPIPE);
-	strbuf_release(&buf);
+	opt.feed_pipe = pipe_from_string_list;
+	opt.feed_pipe_ctx = &to_stdin;
 
-	ret |= finish_command(&proc);
+	ret = run_hooks_opt(transaction->ref_store->repo, "reference-transaction", &opt);
+	to_stdin.strdup_strings = 1;
+	string_list_clear(&to_stdin, 0);
+
 	return ret;
 }
 
