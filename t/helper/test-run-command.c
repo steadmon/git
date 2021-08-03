@@ -23,19 +23,24 @@ static int number_callbacks;
 static int parallel_next(struct child_process *cp,
 			 struct strbuf *err,
 			 void *cb,
-			 void **task_cb UNUSED)
+			 void **task_cb)
 {
 	struct child_process *d = cb;
 	if (number_callbacks >= 4)
 		return 0;
 
 	strvec_pushv(&cp->args, d->args.v);
+	cp->in = d->in;
+	cp->no_stdin = d->no_stdin;
 	if (err)
 		strbuf_addstr(err, "preloaded output of a child\n");
 	else
 		fprintf(stderr, "preloaded output of a child\n");
 
 	number_callbacks++;
+
+	*task_cb = xmalloc(sizeof(int));
+	*(int*)(*task_cb) = 2;
 	return 1;
 }
 
@@ -54,14 +59,37 @@ static int no_job(struct child_process *cp UNUSED,
 static int task_finished(int result UNUSED,
 			 struct strbuf *err,
 			 void *pp_cb UNUSED,
-			 void *pp_task_cb UNUSED)
+			 void *pp_task_cb)
 {
 	if (err)
 		strbuf_addstr(err, "asking for a quick stop\n");
 	else
 		fprintf(stderr, "asking for a quick stop\n");
+	if (pp_task_cb)
+		free(pp_task_cb);
 	return 1;
 }
+
+static int task_finished_quiet(int result UNUSED,
+			       struct strbuf *err UNUSED,
+			       void *pp_cb UNUSED,
+			       void *pp_task_cb)
+{
+	if (pp_task_cb)
+		free(pp_task_cb);
+	return 0;
+}
+
+static int test_stdin(struct strbuf *pipe, void *cb UNUSED, void *task_cb)
+{
+	int *lines_remaining = task_cb;
+
+	if (*lines_remaining)
+		strbuf_addf(pipe, "sample stdin %d\n", --(*lines_remaining));
+
+	return !(*lines_remaining);
+}
+
 
 struct testsuite {
 	struct string_list tests, failed;
@@ -116,6 +144,9 @@ static int test_finished(int result, struct strbuf *err, void *cb,
 
 	strbuf_addf(err, "%s: '%s'\n", result ? "FAIL" : "SUCCESS", name);
 
+	if (task_cb)
+		free(task_cb);
+
 	return 0;
 }
 
@@ -126,6 +157,9 @@ static int test_failed(struct strbuf *out, void *cb, void *task_cb)
 
 	string_list_append(&suite->failed, name);
 	strbuf_addf(out, "FAILED TO START: '%s'\n", name);
+
+	if (task_cb)
+		free(task_cb);
 
 	return 0;
 }
@@ -157,6 +191,7 @@ static int testsuite(int argc, const char **argv)
 	struct run_process_parallel_opts opts = {
 		.get_next_task = next_test,
 		.start_failure = test_failed,
+		.feed_pipe = test_stdin,
 		.task_finished = test_finished,
 		.data = &suite,
 	};
@@ -466,6 +501,12 @@ int cmd__run_command(int argc, const char **argv)
 	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
 		opts.get_next_task = no_job;
 		opts.task_finished = task_finished;
+	} else if (!strcmp(argv[1], "run-command-stdin")) {
+		proc.in = -1;
+		proc.no_stdin = 0;
+		opts.get_next_task = parallel_next;
+		opts.task_finished = task_finished_quiet;
+		opts.feed_pipe = test_stdin;
 	} else {
 		ret = 1;
 		fprintf(stderr, "check usage\n");

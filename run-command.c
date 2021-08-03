@@ -18,6 +18,7 @@
 #include "config.h"
 #include "packfile.h"
 #include "compat/nonblock.h"
+#include "wrapper.h"
 
 void child_process_init(struct child_process *child)
 {
@@ -1646,6 +1647,42 @@ static int pp_start_one(struct parallel_processes *pp,
 	return 0;
 }
 
+static void pp_buffer_stdin(struct parallel_processes *pp,
+			    const struct run_process_parallel_opts *opts)
+{
+	int i;
+	struct strbuf sb = STRBUF_INIT;
+
+	/* Buffer stdin for each pipe. */
+	for (i = 0; i < opts->processes; i++) {
+		if (pp->children[i].state == GIT_CP_WORKING &&
+		    pp->children[i].process.in > 0) {
+			int done;
+			strbuf_reset(&sb);
+			if (opts->feed_pipe)
+				done = opts->feed_pipe(&sb, opts->data,
+						       pp->children[i].data);
+			else
+				done = 1;
+
+			if (sb.len) {
+				if (write_in_full(pp->children[i].process.in,
+					      sb.buf, sb.len) < 0) {
+					if (errno != EPIPE)
+						die_errno("write");
+					done = 1;
+				}
+			}
+			if (done) {
+				close(pp->children[i].process.in);
+				pp->children[i].process.in = 0;
+			}
+		}
+	}
+
+	strbuf_release(&sb);
+}
+
 static void pp_buffer_stderr(struct parallel_processes *pp,
 			     const struct run_process_parallel_opts *opts,
 			     int output_timeout)
@@ -1716,6 +1753,7 @@ static int pp_collect_finished(struct parallel_processes *pp,
 		pp->children[i].state = GIT_CP_FREE;
 		if (pp->pfd)
 			pp->pfd[i].fd = -1;
+		pp->children[i].process.in = 0;
 		child_process_init(&pp->children[i].process);
 
 		if (opts->ungroup) {
@@ -1769,6 +1807,8 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 					   "max:%"PRIuMAX,
 					   (uintmax_t)opts->processes);
 
+	sigchain_push(SIGPIPE, SIG_IGN);
+
 	pp_init(&pp, opts, &pp_sig);
 	while (1) {
 		for (i = 0;
@@ -1786,9 +1826,14 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		}
 		if (!pp.nr_processes)
 			break;
+		pp_buffer_stdin(&pp, opts);
 		if (opts->ungroup) {
-			for (size_t i = 0; i < opts->processes; i++)
-				pp.children[i].state = GIT_CP_WAIT_CLEANUP;
+			int i;
+
+			for (i = 0; i < opts->processes; i++)
+				if (pp.children[i].state == GIT_CP_WORKING &&
+				    ! pp.children[i].process.in)
+					pp.children[i].state = GIT_CP_WAIT_CLEANUP;
 		} else {
 			pp_buffer_stderr(&pp, opts, output_timeout);
 			pp_output(&pp);
@@ -1803,8 +1848,11 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 	pp_cleanup(&pp, opts);
 
+	sigchain_pop(SIGPIPE);
+
 	if (do_trace2)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
+
 }
 
 int prepare_auto_maintenance(int quiet, struct child_process *maint)

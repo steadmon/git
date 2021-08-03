@@ -421,6 +421,20 @@ typedef int (*start_failure_fn)(struct strbuf *out,
 				void *pp_task_cb);
 
 /**
+ * This callback is called repeatedly on every child process who requests
+ * start_command() to create a pipe by setting child_process.in < 0.
+ *
+ * pp_cb is the callback cookie as passed into run_processes_parallel, and
+ * pp_task_cb is the callback cookie as passed into get_next_task_fn.
+ * The contents of 'send' will be read into the pipe and passed to the pipe.
+ *
+ * Return nonzero to close the pipe.
+ */
+typedef int (*feed_pipe_fn)(struct strbuf *pipe,
+			    void *pp_cb,
+			    void *pp_task_cb);
+
+/**
  * This callback is called on every child process that finished processing.
  *
  * See run_processes_parallel() below for a discussion of the "struct
@@ -472,6 +486,12 @@ struct run_process_parallel_opts
 	 * NULL to omit any special handling.
 	 */
 	start_failure_fn start_failure;
+
+	/*
+	 * feed_pipe: see feed_pipe_fn() above. This can be NULL to omit any
+	 * special handling.
+	 */
+	feed_pipe_fn feed_pipe;
 
 	/**
 	 * task_finished: See task_finished_fn() above. This can be
