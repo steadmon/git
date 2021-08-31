@@ -397,7 +397,7 @@ test_expect_success 'warn on improper hash version' '
 test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'lower layers have overflow chunk' '
 	UNIX_EPOCH_ZERO="@0 +0000" &&
 	FUTURE_DATE="@4147483646 +0000" &&
-	rm -f full/.git/objects/info/commit-graph &&
+	git -C full commit-graph clear &&
 	test_commit -C full --date "$FUTURE_DATE" future-1 &&
 	test_commit -C full --date "$UNIX_EPOCH_ZERO" old-1 &&
 	git -C full commit-graph write --reachable &&
@@ -824,7 +824,7 @@ test_expect_success 'overflow during generation version upgrade' '
 
 corrupt_chunk () {
 	graph=full/.git/objects/info/commit-graph &&
-	test_when_finished "rm -rf $graph" &&
+	test_when_finished "git -C full commit-graph clear" &&
 	git -C full commit-graph write --reachable &&
 	corrupt_chunk_file $graph "$@"
 }
@@ -943,6 +943,15 @@ test_expect_success 'stale commit cannot be parsed when traversing graph' '
 		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-parse HEAD~2 2>error &&
 		grep "error: commit $oid exists in commit-graph but not in the object database" error
 	)
+'
+
+test_expect_success 'commit-graph clear removes files' '
+	git -C full commit-graph write &&
+	git -C full commit-graph verify &&
+	test_path_is_file full/.git/objects/info/commit-graph &&
+	git -C full commit-graph clear &&
+	! test_path_exists full/.git/objects/info/commit-graph &&
+	! test_path_exists full/.git/objects/info/commit-graphs
 '
 
 test_done

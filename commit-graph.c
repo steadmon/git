@@ -206,6 +206,33 @@ char *get_commit_graph_chain_filename(struct object_directory *odb)
 	return xstrfmt("%s/info/commit-graphs/commit-graph-chain", odb->path);
 }
 
+int rm_commit_graph_chain(struct object_directory *odb)
+{
+	int ret = 0;
+	struct strbuf chain_dir = STRBUF_INIT, file_path = STRBUF_INIT;
+	struct dirent *d;
+	DIR *dir;
+
+	strbuf_addf(&chain_dir, "%s/info/commit-graphs/", odb->path);
+	strbuf_addbuf(&file_path, &chain_dir);
+	dir = opendir(chain_dir.buf);
+	if (!dir)
+		goto cleanup;
+	while ((d = readdir(dir))) {
+		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			continue;
+		strbuf_setlen(&file_path, chain_dir.len);
+		strbuf_addstr(&file_path, d->d_name);
+		ret |= unlink_or_warn(file_path.buf);
+	}
+	closedir(dir);
+	rmdir_or_warn(chain_dir.buf);
+cleanup:
+	strbuf_release(&chain_dir);
+	strbuf_release(&file_path);
+	return ret;
+}
+
 static struct commit_graph *alloc_commit_graph(void)
 {
 	struct commit_graph *g = xcalloc(1, sizeof(*g));

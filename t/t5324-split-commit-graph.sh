@@ -120,7 +120,7 @@ test_expect_success 'fork and fail to base a chain on a commit-graph file' '
 	git clone . fork &&
 	(
 		cd fork &&
-		rm .git/objects/info/commit-graph &&
+		git commit-graph clear &&
 		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
 		test_commit new-commit &&
 		git commit-graph write --reachable --split &&
@@ -177,7 +177,7 @@ test_expect_success 'create fork and chain across alternate' '
 	(
 		cd fork &&
 		git config core.commitGraph true &&
-		rm -rf $graphdir &&
+		git commit-graph clear &&
 		echo "$(pwd)/../.git/objects" >.git/objects/info/alternates &&
 		test_commit 13 &&
 		git branch commits/13 &&
@@ -387,7 +387,7 @@ test_expect_success 'verify across alternates' '
 	git clone --no-hardlinks . verify-alt &&
 	(
 		cd verify-alt &&
-		rm -rf $graphdir &&
+		git commit-graph clear &&
 		altdir="$(pwd)/../.git/objects" &&
 		echo "$altdir" >.git/objects/info/alternates &&
 		git commit-graph verify --object-dir="$altdir/" &&
@@ -435,7 +435,7 @@ test_expect_success 'split across alternate where alternate is not split' '
 	git clone --no-hardlinks . alt-split &&
 	(
 		cd alt-split &&
-		rm -f .git/objects/info/commit-graph &&
+		git commit-graph clear &&
 		echo "$(pwd)"/../.git/objects >.git/objects/info/alternates &&
 		test_commit 18 &&
 		git commit-graph write --reachable --split &&
@@ -446,7 +446,7 @@ test_expect_success 'split across alternate where alternate is not split' '
 
 test_expect_success '--split=no-merge always writes an incremental' '
 	test_when_finished rm -rf a b &&
-	rm -rf $graphdir $infodir/commit-graph &&
+	git commit-graph clear &&
 	git reset --hard commits/2 &&
 	git rev-list HEAD~1 >a &&
 	git rev-list HEAD >b &&
@@ -456,7 +456,7 @@ test_expect_success '--split=no-merge always writes an incremental' '
 '
 
 test_expect_success '--split=replace replaces the chain' '
-	rm -rf $graphdir $infodir/commit-graph &&
+	git commit-graph clear &&
 	git reset --hard commits/3 &&
 	git rev-list -1 HEAD~2 >a &&
 	git rev-list -1 HEAD~1 >b &&
@@ -490,7 +490,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'handles file descriptor exhaustion'
 while read mode modebits
 do
 	test_expect_success POSIXPERM "split commit-graph respects core.sharedrepository $mode" '
-		rm -rf $graphdir $infodir/commit-graph &&
+		git commit-graph clear &&
 		git reset --hard commits/1 &&
 		test_config core.sharedrepository "$mode" &&
 		git commit-graph write --split --reachable &&
@@ -508,7 +508,7 @@ done <<\EOF
 EOF
 
 test_expect_success '--split=replace with partial Bloom data' '
-	rm -rf $graphdir $infodir/commit-graph &&
+	git commit-graph clear &&
 	git reset --hard commits/3 &&
 	git rev-list -1 HEAD~2 >a &&
 	git rev-list -1 HEAD~1 >b &&
@@ -716,6 +716,16 @@ test_expect_success 'write generation data chunk when commit-graph chain is repl
 		graph_read_expect $(($NUM_FIRST_LAYER_COMMITS + $NUM_SECOND_LAYER_COMMITS)) &&
 		git commit-graph verify
 	)
+'
+
+
+test_expect_success 'commit-graph clear removes files' '
+	git commit-graph write &&
+	git commit-graph verify &&
+	! test_dir_is_empty .git/objects/info/commit-graphs &&
+	git commit-graph clear &&
+	! test_path_exists .git/objects/info/commit-graph &&
+	! test_path_exists .git/objects/info/commit-graphs
 '
 
 test_done

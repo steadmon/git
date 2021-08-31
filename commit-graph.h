@@ -31,6 +31,7 @@ struct string_list;
 
 char *get_commit_graph_filename(struct object_directory *odb);
 char *get_commit_graph_chain_filename(struct object_directory *odb);
+int rm_commit_graph_chain(struct object_directory *odb);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 int open_commit_graph_chain(const char *chain_file, int *fd, struct stat *st);
 

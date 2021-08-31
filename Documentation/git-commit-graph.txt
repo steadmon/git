@@ -14,6 +14,7 @@ SYNOPSIS
 			[--split[=<strategy>]] [--reachable | --stdin-packs | --stdin-commits]
 			[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]
 			<split-options>
+'git commit-graph clear' [--object-dir <dir>]
 
 
 DESCRIPTION
@@ -113,6 +114,10 @@ database. Used to check for corrupted data.
 +
 With the `--shallow` option, only check the tip commit-graph file in
 a chain of split commit-graphs.
+
+'clear'::
+
+Delete the commit graph file(s) and directory, if any exist.
 
 
 EXAMPLES

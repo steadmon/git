@@ -23,6 +23,9 @@
 	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n" \
 	   "                       <split-options>")
 
+#define BUILTIN_COMMIT_GRAPH_CLEAR_USAGE \
+	N_("git commit-graph clear [--object-dir <dir>]")
+
 static const char * builtin_commit_graph_verify_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
 	NULL
@@ -33,9 +36,15 @@ static const char * builtin_commit_graph_write_usage[] = {
 	NULL
 };
 
+static const char * builtin_commit_graph_clear_usage[] = {
+	BUILTIN_COMMIT_GRAPH_CLEAR_USAGE,
+	NULL
+};
+
 static char const * const builtin_commit_graph_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
 	BUILTIN_COMMIT_GRAPH_WRITE_USAGE,
+	BUILTIN_COMMIT_GRAPH_CLEAR_USAGE,
 	NULL,
 };
 
@@ -331,12 +340,43 @@ cleanup:
 	return result;
 }
 
+static int graph_clear(int argc, const char **argv, const char *prefix) {
+	int ret = 0;
+	struct object_directory *odb = NULL;
+	char *path;
+	static struct option builtin_commit_graph_clear_options[] = {
+		OPT_END(),
+	};
+	struct option *options = add_common_options(builtin_commit_graph_clear_options);
+
+	trace2_cmd_mode("clear");
+
+	argc = parse_options(argc, argv, NULL,
+			     builtin_commit_graph_clear_options,
+			     builtin_commit_graph_clear_usage, 0);
+
+	if (!opts.obj_dir)
+		opts.obj_dir = get_object_directory();
+
+	odb = find_odb(the_repository, opts.obj_dir);
+
+	path = get_commit_graph_filename(odb);
+	ret |= unlink_or_warn(path);
+	ret |= rm_commit_graph_chain(odb);
+
+	FREE_AND_NULL(options);
+	free(path);
+
+	return ret;
+}
+
 int cmd_commit_graph(int argc, const char **argv, const char *prefix)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_commit_graph_options[] = {
 		OPT_SUBCOMMAND("verify", &fn, graph_verify),
 		OPT_SUBCOMMAND("write", &fn, graph_write),
+		OPT_SUBCOMMAND("clear", &fn, graph_clear),
 		OPT_END(),
 	};
 	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
