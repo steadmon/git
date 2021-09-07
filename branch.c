@@ -126,6 +126,38 @@ out_err:
 	return -1;
 }
 
+static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
+{
+	struct strbuf key = STRBUF_INIT;
+	char *remote;
+	const char *bare_ref;
+
+	bare_ref = orig_ref;
+	skip_prefix(orig_ref, "refs/heads/", &bare_ref);
+
+	strbuf_addf(&key, "branch.%s.remote", bare_ref);
+	if (git_config_get_string(key.buf, &remote)) {
+		warning("branch.autoSetupMerge=inherit, but could not find %s",
+			key.buf);
+		strbuf_release(&key);
+		return 1;
+	}
+	tracking->remote = remote;
+
+	strbuf_reset(&key);
+	strbuf_addf(&key, "branch.%s.merge", bare_ref);
+	if (git_config_get_string(key.buf, &tracking->src)) {
+		warning("branch.autoSetupMerge=inherit, but could not find %s",
+			key.buf);
+		strbuf_release(&key);
+		return 1;
+	}
+
+	tracking->matches = 1;
+	strbuf_release(&key);
+	return 0;
+}
+
 /*
  * This is called when new_ref is branched off of orig_ref, and tries
  * to infer the settings for branch.<new_ref>.{remote,merge} from the
@@ -139,7 +171,9 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
-	if (for_each_remote(find_tracked_branch, &tracking))
+	if (track == BRANCH_TRACK_INHERIT && inherit_tracking(&tracking, orig_ref))
+		return;
+	else if (for_each_remote(find_tracked_branch, &tracking))
 		return;
 
 	if (!tracking.matches)
