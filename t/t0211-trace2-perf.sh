@@ -9,6 +9,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
 sane_unset GIT_TRACE2_PERF_BRIEF
 sane_unset GIT_TRACE2_CONFIG_PARAMS
+sane_unset GIT_TRACE2_PARENT_NAME GIT_TRACE2_PARENT_SID
 
 # Add t/helper directory to PATH so that we can use a relative
 # path to run nested instances of test-tool.exe (see 004child).

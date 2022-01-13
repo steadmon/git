@@ -29,6 +29,8 @@ test_description="limiting blob downloads when merging with partial clones"
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
+sane_unset GIT_TRACE2_PARENT_NAME GIT_TRACE2_PARENT_SID
+
 test_setup_repo () {
 	test -d server && return
 	test_create_repo server &&
