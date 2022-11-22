@@ -18,7 +18,8 @@ test_expect_success setup '
 
 	test_tick &&
 	echo frotz >nitfol &&
-	git add nitfol sub &&
+	git add nitfol &&
+	git submodule add ./sub &&
 	git commit -m superproject &&
 
 	(
@@ -122,25 +123,30 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)'
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) [.gitmodules]' '
+	git branch pristine-gitmodules &&
 	git config diff.ignoreSubmodules dirty &&
 	git diff HEAD >actual &&
 	test_must_be_empty actual &&
 	git config --add -f .gitmodules submodule.subname.ignore none &&
 	git config --add -f .gitmodules submodule.subname.path sub &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual.body &&
 	git config -f .gitmodules submodule.subname.ignore all &&
 	git config -f .gitmodules submodule.subname.path sub &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual2 &&
 	test_must_be_empty actual2 &&
 	git config -f .gitmodules submodule.subname.ignore untracked &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual3 &&
 	sed -e "1,/^@@/d" actual3 >actual3.body &&
 	expect_from_to >expect.body $subprev $subprev-dirty &&
 	test_cmp expect.body actual3.body &&
 	git config -f .gitmodules submodule.subname.ignore dirty &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual4 &&
 	test_must_be_empty actual4 &&
 	git config submodule.subname.ignore none &&
@@ -152,7 +158,7 @@ test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match) 
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname &&
 	git config --unset diff.ignoreSubmodules &&
-	rm .gitmodules
+	git reset --hard pristine-gitmodules
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (index, refs match)' '
@@ -190,12 +196,15 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match)'
 test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) [.gitmodules]' '
 	git config --add -f .gitmodules submodule.subname.ignore all &&
 	git config --add -f .gitmodules submodule.subname.path sub &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual2 &&
 	test_must_be_empty actual2 &&
 	git config -f .gitmodules submodule.subname.ignore untracked &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual3 &&
 	test_must_be_empty actual3 &&
 	git config -f .gitmodules submodule.subname.ignore dirty &&
+	git commit -m "Update .gitmodules" .gitmodules &&
 	git diff HEAD >actual4 &&
 	test_must_be_empty actual4 &&
 	git config submodule.subname.ignore none &&
@@ -206,7 +215,7 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) 
 	test_cmp expect.body actual.body &&
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname &&
-	rm .gitmodules
+	git reset --hard pristine-gitmodules
 '
 
 test_expect_success 'git diff between submodule commits' '
@@ -243,7 +252,7 @@ test_expect_success 'git diff between submodule commits [.gitmodules]' '
 	expect_from_to >expect.body $subtip $subprev &&
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname &&
-	rm .gitmodules
+	git reset --hard pristine-gitmodules
 '
 
 test_expect_success 'git diff (empty submodule dir)' '

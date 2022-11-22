@@ -892,7 +892,7 @@ test_expect_success 'setup status submodule summary' '
 		git add foo &&
 		git commit -m "Add foo"
 	) &&
-	git add sm
+	git submodule add ./sm
 '
 
 test_expect_success 'status submodule summary is disabled by default' '
@@ -904,6 +904,7 @@ and have 1 and 2 different commits each, respectively.
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
+	new file:   .gitmodules
 	new file:   dir2/added
 	new file:   sm
 
@@ -931,6 +932,7 @@ test_expect_success 'status --untracked-files=all does not show submodule' '
 '
 
 cat >expect <<EOF
+A  .gitmodules
  M dir1/modified
 A  dir2/added
 A  sm
@@ -961,6 +963,7 @@ and have 1 and 2 different commits each, respectively.
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
+	new file:   .gitmodules
 	new file:   dir2/added
 	new file:   sm
 
@@ -998,6 +1001,7 @@ test_expect_success 'commit with submodule summary ignores status.displayComment
 '
 
 cat >expect <<EOF
+A  .gitmodules
  M dir1/modified
 A  dir2/added
 A  sm
@@ -1068,6 +1072,7 @@ and have 2 and 2 different commits each, respectively.
 
 Changes to be committed:
   (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
+	new file:   .gitmodules
 	new file:   dir2/added
 	new file:   sm
 
@@ -1134,7 +1139,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1152,8 +1156,37 @@ test_expect_success '.gitmodules ignore=untracked suppresses submodules with unt
 	test_cmp expect output &&
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
+	cat > expect-modified-gitmodules << EOF &&
+On branch main
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   sm
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitmodules
+	modified:   dir1/modified
+
+Submodule changes to be committed:
+
+* sm $head...$new_head (1):
+  > Add bar
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	dir1/untracked
+	dir2/modified
+	dir2/untracked
+	untracked
+
+EOF
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1163,7 +1196,7 @@ test_expect_success '.git/config ignore=untracked suppresses submodules with unt
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config --remove-section -f .gitmodules submodule.subname
 '
@@ -1180,7 +1213,7 @@ test_expect_success '.gitmodules ignore=dirty suppresses submodules with untrack
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1190,7 +1223,7 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with untrack
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1205,7 +1238,7 @@ test_expect_success '.gitmodules ignore=dirty suppresses submodules with modifie
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1215,7 +1248,7 @@ test_expect_success '.git/config ignore=dirty suppresses submodules with modifie
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1245,7 +1278,6 @@ Submodule changes to be committed:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1259,8 +1291,39 @@ EOF
 test_expect_success ".gitmodules ignore=untracked doesn't suppress submodules with modified content" '
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
+	cat > expect-modified-gitmodules << EOF &&
+On branch main
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   sm
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   .gitmodules
+	modified:   dir1/modified
+	modified:   sm (modified content)
+
+Submodule changes to be committed:
+
+* sm $head...$new_head (1):
+  > Add bar
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	dir1/untracked
+	dir2/modified
+	dir2/untracked
+	untracked
+
+EOF
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1270,7 +1333,7 @@ test_expect_success ".git/config ignore=untracked doesn't suppress submodules wi
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1306,7 +1369,6 @@ Submodules changed but not updated:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1318,10 +1380,45 @@ EOF
 '
 
 test_expect_success ".gitmodules ignore=untracked doesn't suppress submodule summary" '
+	cat > expect-modified-gitmodules << EOF &&
+On branch main
+Your branch and '\''upstream'\'' have diverged,
+and have 2 and 2 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   sm
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitmodules
+	modified:   dir1/modified
+	modified:   sm (new commits)
+
+Submodule changes to be committed:
+
+* sm $head...$new_head (1):
+  > Add bar
+
+Submodules changed but not updated:
+
+* sm $new_head...$head2 (1):
+  > 2nd commit
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	dir1/untracked
+	dir2/modified
+	dir2/untracked
+	untracked
+
+EOF
 	git config --add -f .gitmodules submodule.subname.ignore untracked &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1331,7 +1428,7 @@ test_expect_success ".git/config ignore=untracked doesn't suppress submodule sum
 	git config --add submodule.subname.ignore untracked &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1344,7 +1441,7 @@ test_expect_success ".gitmodules ignore=dirty doesn't suppress submodule summary
 	git config --add -f .gitmodules submodule.subname.ignore dirty &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
@@ -1354,7 +1451,7 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 	git config --add submodule.subname.ignore dirty &&
 	git config --add submodule.subname.path sm &&
 	git status >output &&
-	test_cmp expect output &&
+	test_cmp expect-modified-gitmodules output &&
 	git config --remove-section submodule.subname &&
 	git config -f .gitmodules  --remove-section submodule.subname
 '
@@ -1387,7 +1484,6 @@ cat > expect << EOF
 ;
 ; Untracked files:
 ;   (use "git add <file>..." to include in what will be committed)
-;	.gitmodules
 ;	dir1/untracked
 ;	dir2/modified
 ;	dir2/untracked
@@ -1420,7 +1516,6 @@ Changes not staged for commit:
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1446,11 +1541,11 @@ Changes to be committed:
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitmodules
 	modified:   dir1/modified
 
 Untracked files:
   (use "git add <file>..." to include in what will be committed)
-	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1566,6 +1661,7 @@ Changes to be committed:
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
   (use "git restore <file>..." to discard changes in working directory)
+	modified:   .gitmodules
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
