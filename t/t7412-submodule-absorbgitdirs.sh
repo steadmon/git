@@ -100,7 +100,7 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 test_expect_success 'setup a gitlink with missing .gitmodules entry' '
 	git init sub2 &&
 	test_commit -C sub2 first &&
-	git add sub2 &&
+	git add --no-warn-embedded-repo sub2 &&
 	git commit -m superproject
 '
 

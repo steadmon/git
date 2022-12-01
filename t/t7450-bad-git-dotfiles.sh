@@ -307,7 +307,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 		EOF
 		git clone . thing1 &&
 		git clone . thing2 &&
-		git add .gitmodules thing1 thing2 &&
+		git add --no-warn-embedded-repo .gitmodules thing1 thing2 &&
 		test_tick &&
 		git commit -m nested
 	) &&

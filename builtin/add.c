@@ -421,36 +421,45 @@ static const char embedded_advice[] = N_(
 "\n"
 "	git rm --cached %s\n"
 "\n"
-"See \"git help submodule\" for more information."
+"See \"git help submodule\" for more information.\n"
+"\n"
+"If you cannot use submodules, you may bypass this check with:\n"
+"\n"
+"	git add --no-warn-embedded-repo %s\n"
 );
 
-static void check_embedded_repo(const char *path)
+static int check_embedded_repo(const char *path)
 {
+	int ret = 0;
 	struct strbuf name = STRBUF_INIT;
 	static int adviced_on_embedded_repo = 0;
 
 	if (!warn_on_embedded_repo)
-		return;
+		goto cleanup;
 	if (!ends_with(path, "/"))
-		return;
+		goto cleanup;
+
+	ret = 1;
 
 	/* Drop trailing slash for aesthetics */
 	strbuf_addstr(&name, path);
 	strbuf_strip_suffix(&name, "/");
 
-	warning(_("adding embedded git repository: %s"), name.buf);
+	error(_("Cannot add embedded git repository: %s"), name.buf);
 	if (!adviced_on_embedded_repo &&
 	    advice_enabled(ADVICE_ADD_EMBEDDED_REPO)) {
-		advise(embedded_advice, name.buf, name.buf);
+		advise(embedded_advice, name.buf, name.buf, name.buf);
 		adviced_on_embedded_repo = 1;
 	}
 
+cleanup:
 	strbuf_release(&name);
+	return ret;
 }
 
 static int add_files(struct dir_struct *dir, int flags)
 {
-	int i, exit_status = 0;
+	int i, exit_status = 0, embedded_repo = 0;
 	struct string_list matched_sparse_paths = STRING_LIST_INIT_NODUP;
 
 	if (dir->ignored_nr) {
@@ -476,9 +485,12 @@ static int add_files(struct dir_struct *dir, int flags)
 				die(_("adding files failed"));
 			exit_status = 1;
 		} else {
-			check_embedded_repo(dir->entries[i]->name);
+			embedded_repo |= check_embedded_repo(dir->entries[i]->name);
 		}
 	}
+
+	if (embedded_repo)
+		die(_("Refusing to add embedded git repositories"));
 
 	if (matched_sparse_paths.nr) {
 		advise_on_updating_sparse_paths(&matched_sparse_paths);

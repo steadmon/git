@@ -118,7 +118,7 @@ test_expect_success 'setup - repository in init subdirectory' '
 test_expect_success 'setup - commit with gitlink' '
 	echo a >a &&
 	echo z >z &&
-	git add a init z &&
+	git add --no-warn-embedded-repo a init z &&
 	git commit -m "super commit 1"
 '
 
@@ -771,7 +771,7 @@ test_expect_success 'set up for relative path tests' '
 			git init &&
 			test_commit foo
 		) &&
-		git add sub &&
+		git add --no-warn-embedded-repo sub &&
 		git config -f .gitmodules submodule.sub.path sub &&
 		git config -f .gitmodules submodule.sub.url ../subrepo &&
 		cp .git/config pristine-.git-config &&
