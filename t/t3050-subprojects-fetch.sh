@@ -15,7 +15,8 @@ test_expect_success setup '
 		git commit -m "subproject commit #1"
 	) &&
 	>mainfile &&
-	git add sub mainfile &&
+	git add mainfile &&
+	git submodule add ./sub &&
 	test_tick &&
 	git commit -m "superproject commit #1"
 '

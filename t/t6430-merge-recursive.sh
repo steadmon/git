@@ -677,6 +677,7 @@ test_expect_success 'merging with triple rename across D/F conflict' '
 	echo content3 >sub2/file3 &&
 	mkdir simple &&
 	echo base >simple/bar &&
+	git -c protocol.file.allow=always submodule add ./sym &&
 	git add -A &&
 	test_tick &&
 	git commit -m base &&

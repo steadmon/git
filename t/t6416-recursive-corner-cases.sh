@@ -1270,7 +1270,7 @@ test_expect_success 'setup submodule modify/modify' '
 		) &&
 
 		git -C submod reset --hard A &&
-		git add submod &&
+		git submodule add ./submod &&
 		git commit -m A &&
 		git tag A &&
 
@@ -1303,7 +1303,7 @@ test_expect_merge_algorithm failure success 'check submodule modify/modify' '
 		test_must_fail git merge -s recursive E^0 &&
 
 		git ls-files -s >out &&
-		test_line_count = 3 out &&
+		test_line_count = 4 out &&
 		git ls-files -u >out &&
 		test_line_count = 3 out &&
 		git ls-files -o >out &&
@@ -1364,12 +1364,12 @@ test_expect_success 'setup submodule add/add' '
 
 		git checkout -b B A &&
 		git -C submod reset --hard B &&
-		git add submod &&
+		git submodule add ./submod &&
 		git commit -m B &&
 
 		git checkout -b C A &&
 		git -C submod reset --hard C &&
-		git add submod &&
+		git submodule add ./submod &&
 		git commit -m C &&
 
 		git checkout -q B^0 &&
@@ -1391,7 +1391,7 @@ test_expect_merge_algorithm failure success 'check submodule add/add' '
 		test_must_fail git merge -s recursive E^0 &&
 
 		git ls-files -s >out &&
-		test_line_count = 3 out &&
+		test_line_count = 4 out &&
 		git ls-files -u >out &&
 		test_line_count = 2 out &&
 		git ls-files -o >out &&
@@ -1439,7 +1439,7 @@ test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
 
 		git checkout -b B A &&
 		git -C path reset --hard B &&
-		git add path &&
+		git submodule add ./path &&
 		git commit -m B &&
 
 		git checkout -b C A &&

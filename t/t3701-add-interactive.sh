@@ -913,8 +913,9 @@ test_expect_success 'setup different kinds of dirty submodules' '
 		) &&
 		cp -R dirty-head dirty-otherwise &&
 		cp -R dirty-head dirty-both-ways &&
-		git add dirty-head &&
-		git add dirty-otherwise dirty-both-ways &&
+		git submodule add ./dirty-head &&
+		git submodule add ./dirty-otherwise &&
+		git submodule add ./dirty-both-ways &&
 		git commit -m initial &&
 
 		cd dirty-head &&

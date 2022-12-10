@@ -28,7 +28,7 @@ test_expect_success setup '
 			git add junk &&
 			git commit -m "Initial junk"
 		) &&
-		git add gar/bage &&
+		git submodule add ./gar/bage ./gar/bage &&
 		git commit -m "Initial superproject"
 	)
 '
@@ -367,7 +367,7 @@ test_expect_success 'push succeeds if submodule has no remote and is on the firs
 			git add junk &&
 			git commit -m "initial"
 		) &&
-		git add b &&
+		git submodule add ./b &&
 		git commit -m "added submodule" &&
 		git push --recurse-submodules=check origin main
 	)

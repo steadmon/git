@@ -69,7 +69,7 @@ test_expect_success 'check if clone works' '
 test_expect_success 'removing and adding subproject' '
 	git update-index --force-remove -- sub2 &&
 	mv sub2 sub3 &&
-	git add sub3 &&
+	git submodule add ./sub3 &&
 	git commit -q -m "renaming a subproject" &&
 	test_expect_code 1 git diff -M --name-status --exit-code HEAD^ HEAD
 '

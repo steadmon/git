@@ -66,6 +66,7 @@ test_expect_success 'git diff-index --cached HEAD^' '
 test_expect_success 'git diff-index --cached HEAD^' '
 	echo text >>b &&
 	echo 3 >c &&
+	git submodule add ./test-outside/repo ./test-outside/repo &&
 	git add . &&
 	test_expect_code 1 git diff-index --quiet --cached HEAD^ >cnt &&
 	test_line_count = 0 cnt

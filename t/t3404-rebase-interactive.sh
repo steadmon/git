@@ -675,7 +675,8 @@ test_expect_success 'submodule rebase setup' '
 		git add elif && git commit -m "submodule initial"
 	) &&
 	echo 1 >file1 &&
-	git add file1 sub &&
+	git add file1 &&
+	git submodule add ./sub &&
 	test_tick &&
 	git commit -m "One" &&
 	echo 2 >file1 &&

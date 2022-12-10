@@ -36,7 +36,7 @@ test_expect_success basics '
 		git add file &&
 		git commit -m "sub initial"
 	) &&
-	git add xyzzy &&
+	git submodule add ./xyzzy &&
 
 	test_tick &&
 	git commit -m initial &&

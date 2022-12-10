@@ -45,7 +45,7 @@ add_file . foo >/dev/null
 head1=$(add_file sm1 foo1 foo2)
 
 test_expect_success 'added submodule' "
-	git add sm1 &&
+	git submodule add ./sm1 &&
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
 	* sm1 0000000...$head1 (2):
@@ -253,7 +253,7 @@ test_expect_success 'deleted submodule' "
 test_expect_success 'create second submodule' '
 	test_create_repo sm2 &&
 	head7=$(add_file sm2 foo8 foo9) &&
-	git add sm2
+	git submodule add ./sm2
 '
 
 test_expect_success 'multiple submodules' "

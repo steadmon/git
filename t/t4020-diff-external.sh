@@ -253,7 +253,7 @@ test_expect_success 'clean up crlf leftovers' '
 test_expect_success 'submodule diff' '
 	git init sub &&
 	( cd sub && test_commit sub1 ) &&
-	git add sub &&
+	git submodule add ./sub &&
 	test_tick &&
 	git commit -m "add submodule" &&
 	( cd sub && test_commit sub2 ) &&

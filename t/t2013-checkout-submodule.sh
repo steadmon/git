@@ -10,7 +10,7 @@ test_expect_success 'setup' '
 	(cd submodule &&
 	 git init &&
 	 test_commit first) &&
-	git add submodule &&
+	git submodule add ./submodule &&
 	test_tick &&
 	git commit -m superproject &&
 	(cd submodule &&
@@ -51,6 +51,7 @@ test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .gitm
 	git config diff.ignoreSubmodules none &&
 	git config -f .gitmodules submodule.submodule.path submodule &&
 	git config -f .gitmodules submodule.submodule.ignore untracked &&
+	git commit -m "Update patterns in .gitmodules" .gitmodules &&
 	git checkout HEAD >actual 2>&1 &&
 	test_must_be_empty actual
 '
@@ -59,6 +60,7 @@ test_expect_success '"checkout <submodule>" honors submodule.*.ignore from .git/
 	git config -f .gitmodules submodule.submodule.ignore none &&
 	git config submodule.submodule.path submodule &&
 	git config submodule.submodule.ignore all &&
+	git commit -m "Update patterns in .gitmodules" .gitmodules &&
 	git checkout HEAD >actual 2>&1 &&
 	test_must_be_empty actual
 '

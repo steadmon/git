@@ -30,7 +30,7 @@ test_expect_success setup '
 	 git add file &&
 	 test_tick &&
 	 git commit -m sub-root) &&
-	git add sub &&
+	git submodule add ./sub &&
 	test_tick &&
 	git commit -m root &&
 
@@ -85,7 +85,7 @@ test_expect_success 'setup for merge search' '
 	 git branch sub-a) &&
 	git commit --allow-empty -m init &&
 	git branch init &&
-	git add sub &&
+	git submodule add ./sub &&
 	git commit -m "a" &&
 	git branch a &&
 
@@ -132,7 +132,7 @@ test_expect_success 'finish setup for merge-search' '
 	git checkout -b g init &&
 	(cd sub &&
 	 git checkout -b sub-g sub-c) &&
-	git add sub &&
+	git submodule add ./sub &&
 	git commit -a -m "g")
 '
 
@@ -296,7 +296,7 @@ test_expect_success 'setup for recursive merge with submodule' '
 	  git checkout -b sub-cb sub-c &&
 	  git merge sub-b &&
 	  git checkout main) &&
-	 git add sub &&
+	 git submodule add ./sub &&
 	 git commit -m a &&
 	 git checkout -b top-b main &&
 	 (cd sub && git checkout sub-b) &&
@@ -520,7 +520,7 @@ test_expect_success 'setup for null merge base' '
 	git commit --allow-empty -m init &&
 	git branch init &&
 	git checkout -b a init &&
-	git add sub &&
+	git submodule add ./sub &&
 	git commit -m "a" &&
 	git switch main &&
 	(cd sub &&
@@ -532,7 +532,7 @@ test_expect_success 'setup for null merge base' '
 test_expect_success 'merging should fail with no merge base' '
 	(cd no-merge-base &&
 	git checkout -b b init &&
-	git add sub &&
+	git submodule add ./sub &&
 	git commit -m "b" &&
 	test_must_fail git merge a >actual &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort

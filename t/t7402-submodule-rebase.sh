@@ -14,7 +14,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -m initial &&
 	git clone . submodule &&
-	git add submodule &&
+	git submodule add ./submodule &&
 	test_tick &&
 	git commit -m submodule &&
 	echo second line >> file &&
