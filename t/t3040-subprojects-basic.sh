@@ -19,11 +19,12 @@ test_expect_success 'setup: create subprojects' '
 	( cd sub2 && git init && : >Makefile && git add * &&
 	git commit -q -m "subproject 2" ) &&
 	git update-index --add sub1 &&
-	git add sub2 &&
+	git submodule add ./sub2 &&
 	git commit -q -m "subprojects added" &&
 	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
 	git branch save HEAD &&
 	cat >expected <<-\EOF &&
+	:000000 100644 00000... A	.gitmodules
 	:000000 160000 00000... A	sub1
 	:000000 160000 00000... A	sub2
 	EOF

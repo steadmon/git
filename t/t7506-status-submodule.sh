@@ -31,7 +31,8 @@ sanitize_diff () {
 test_expect_success 'setup' '
 	test_create_repo_with_commit sub &&
 	echo output > .gitignore &&
-	git add sub .gitignore &&
+	git submodule add ./sub &&
+	git add .gitignore &&
 	git commit -m "Add submodule sub"
 '
 
@@ -243,7 +244,7 @@ test_expect_success 'status -a clean (empty submodule dir)' '
 '
 
 cat >status_expect <<\EOF
-AA .gitmodules
+UU .gitmodules
 A  sub1
 EOF
 
@@ -277,7 +278,10 @@ cat >diff_expect <<\EOF
 diff --cc .gitmodules
 --- a/.gitmodules
 +++ b/.gitmodules
-@@@ -1,3 -1,3 +1,9 @@@
+@@@ -1,6 -1,6 +1,12 @@@
+  [submodule "sub"]
+  	path = sub
+  	url = ./sub
 ++<<<<<<< HEAD
  +[submodule "sub2"]
  +	path = sub2
@@ -293,7 +297,10 @@ cat >diff_submodule_expect <<\EOF
 diff --cc .gitmodules
 --- a/.gitmodules
 +++ b/.gitmodules
-@@@ -1,3 -1,3 +1,9 @@@
+@@@ -1,6 -1,6 +1,12 @@@
+  [submodule "sub"]
+  	path = sub
+  	url = ./sub
 ++<<<<<<< HEAD
  +[submodule "sub2"]
  +	path = sub2
