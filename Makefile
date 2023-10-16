@@ -3198,9 +3198,9 @@ endif
 
 test_bindir_programs := $(patsubst %,bin-wrappers/%,$(BINDIR_PROGRAMS_NEED_X) $(BINDIR_PROGRAMS_NO_X) $(TEST_PROGRAMS_NEED_X))
 
-t/stdlib-test$X: t/stdlib-test.o GIT-LDFLAGS $(STD_LIB_FILE) $(STUB_LIB_FILE)
+t/stdlib-test$X: t/stdlib-test.o GIT-LDFLAGS $(STD_LIB_FILE) $(STUB_LIB_FILE) $(LIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
-		$^ $(STD_LIB_FILE) $(STUB_LIB_FILE)
+		$< $(STD_LIB_FILE) $(STUB_LIB_FILE) $(LIBS)
 
 all:: $(TEST_PROGRAMS) $(test_bindir_programs) t/stdlib-test$X $(UNIT_TEST_PROGS)
 
