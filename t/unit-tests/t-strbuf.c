@@ -103,6 +103,11 @@ static void t_addstr(struct strbuf *buf, void *data)
 	check_str(buf->buf + orig_len, text);
 }
 
+static void t_fails_actually(void)
+{
+	check_uint(0, ==, 1);
+}
+
 int cmd_main(int argc, const char **argv)
 {
 	if (!TEST(t_static_init(), "static initialization works"))
@@ -115,6 +120,7 @@ int cmd_main(int argc, const char **argv)
 	TEST(setup(t_addstr, "hello there"), "strbuf_addstr adds string");
 	TEST(setup_populated(t_addstr, "initial value", "hello there"),
 	     "strbuf_addstr appends string to initial value");
+	TEST(t_fails_actually(), "how does strbuf even work");
 
 	return test_done();
 }
