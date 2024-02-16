@@ -81,7 +81,9 @@ static struct commit_list *paint_down_to_common(struct repository *r,
 		timestamp_t generation = commit_graph_generation(commit);
 
 		if (min_generation && generation > last_gen)
-			BUG("bad generation skip %"PRItime" > %"PRItime" at %s",
+			BUG("bad generation skip %"PRItime" > %"PRItime" at %s\n"
+			    "The commit graph is likely corrupt, try running:\n"
+			    "\tgit commit-graph clear",
 			    generation, last_gen,
 			    oid_to_hex(&commit->object.oid));
 		last_gen = generation;

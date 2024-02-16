@@ -843,6 +843,7 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	cat >expect.err <<-\EOF &&
 	error: commit-graph oid fanout chunk is wrong size
 	error: commit-graph required OID fanout chunk missing or corrupted
+	error: try running: git commit-graph clear
 	EOF
 	test_cmp expect.err err
 '
@@ -852,6 +853,7 @@ test_expect_success 'reader notices fanout/lookup table mismatch' '
 	cat >expect.err <<-\EOF &&
 	error: commit-graph OID lookup chunk is the wrong size
 	error: commit-graph required OID lookup chunk missing or corrupted
+	error: try running: git commit-graph clear
 	EOF
 	test_cmp expect.err err
 '
@@ -868,6 +870,7 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	cat >expect.err <<-\EOF &&
 	error: commit-graph fanout values out of order
 	error: commit-graph required OID fanout chunk missing or corrupted
+	error: try running: git commit-graph clear
 	EOF
 	test_cmp expect.err err
 '
@@ -877,6 +880,7 @@ test_expect_success 'reader notices too-small commit data chunk' '
 	cat >expect.err <<-\EOF &&
 	error: commit-graph commit data chunk is wrong size
 	error: commit-graph required commit data chunk missing or corrupted
+	error: try running: git commit-graph clear
 	EOF
 	test_cmp expect.err err
 '

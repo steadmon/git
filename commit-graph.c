@@ -418,6 +418,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (graph_signature != GRAPH_SIGNATURE) {
 		error(_("commit-graph signature %X does not match signature %X"),
 		      graph_signature, GRAPH_SIGNATURE);
+		error(_("try running: git commit-graph clear"));
 		return NULL;
 	}
 
@@ -425,6 +426,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (graph_version != GRAPH_VERSION) {
 		error(_("commit-graph version %X does not match version %X"),
 		      graph_version, GRAPH_VERSION);
+		error(_("try running: git commit-graph clear"));
 		return NULL;
 	}
 
@@ -432,6 +434,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (hash_version != oid_version(the_hash_algo)) {
 		error(_("commit-graph hash version %X does not match version %X"),
 		      hash_version, oid_version(the_hash_algo));
+		error(_("try running: git commit-graph clear"));
 		return NULL;
 	}
 
@@ -447,6 +450,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 			 GRAPH_FANOUT_SIZE + the_hash_algo->rawsz) {
 		error(_("commit-graph file is too small to hold %u chunks"),
 		      graph->num_chunks);
+		error(_("try running: git commit-graph clear"));
 		free(graph);
 		return NULL;
 	}
@@ -459,14 +463,17 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 
 	if (read_chunk(cf, GRAPH_CHUNKID_OIDFANOUT, graph_read_oid_fanout, graph)) {
 		error(_("commit-graph required OID fanout chunk missing or corrupted"));
+		error(_("try running: git commit-graph clear"));
 		goto free_and_return;
 	}
 	if (read_chunk(cf, GRAPH_CHUNKID_OIDLOOKUP, graph_read_oid_lookup, graph)) {
 		error(_("commit-graph required OID lookup chunk missing or corrupted"));
+		error(_("try running: git commit-graph clear"));
 		goto free_and_return;
 	}
 	if (read_chunk(cf, GRAPH_CHUNKID_DATA, graph_read_commit_data, graph)) {
 		error(_("commit-graph required commit data chunk missing or corrupted"));
+		error(_("try running: git commit-graph clear"));
 		goto free_and_return;
 	}
 
@@ -860,7 +867,8 @@ static void load_oid_from_graph(struct commit_graph *g,
 		BUG("NULL commit-graph");
 
 	if (pos >= g->num_commits + g->num_commits_in_base)
-		die(_("invalid commit position. commit-graph is likely corrupt"));
+		die(_("Invalid commit position. The commit-graph is likely corrupt,\n"
+		      "try running:\n\tgit commit-graph clear"));
 
 	lex_index = pos - g->num_commits_in_base;
 
@@ -876,7 +884,8 @@ static struct commit_list **insert_parent_or_die(struct repository *r,
 	struct object_id oid;
 
 	if (pos >= g->num_commits + g->num_commits_in_base)
-		die("invalid parent position %"PRIu32, pos);
+		die("invalid parent position %"PRIu32". The commit-graph is likely corrupt,\n"
+		    "try running:\n\tgit commit-graph clear", pos);
 
 	load_oid_from_graph(g, pos, &oid);
 	c = lookup_commit(r, &oid);
@@ -897,7 +906,8 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 		g = g->base_graph;
 
 	if (pos >= g->num_commits + g->num_commits_in_base)
-		die(_("invalid commit position. commit-graph is likely corrupt"));
+		die(_("invalid commit position. commit-graph is likely corrupt,\n"
+		      "try running:\n\tgit commit-graph clear"));
 
 	lex_index = pos - g->num_commits_in_base;
 	commit_data = g->chunk_commit_data + st_mult(GRAPH_DATA_WIDTH, lex_index);
