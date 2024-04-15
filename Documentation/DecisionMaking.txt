@@ -1,0 +1,58 @@
+Decision-Making Process in the Git Project
+==========================================
+
+Introduction
+------------
+This doc aims to describe the current decision-making process in the Git
+project. It is a descriptive rather than prescriptive doc; that is, we want to
+describe how things work in practice rather than explicitly recommending any
+particular process or changes to the current process.
+
+We want to describe how the project makes larger-scale decisions. We won't be
+discussing how decisions are made for individual patches or patch series,
+although the process is similar at a high level.
+
+Starting a Discussion
+---------------------
+Proposals are made on the mailing list. Because members of the Git community
+have a wide variety of experience, backgrounds, and values, proposals are
+expected to include as much context as possible.
+
+If the proposer is aware of individuals with an interest in the topic being
+discussed, it is polite to CC them on the proposal to make sure they are aware
+of the discussion.
+
+Engaging in Discussion
+----------------------
+Once a proposal has been made, the community will discuss it on-list. While the
+maintainer will often participate in discussions, it is not the maintainer's
+responsibility to guide discussion; the proposer and any other interested
+parties are expected to stay engaged in the discussion and ensure progress is
+made.
+
+Anyone with an interest in the topic is welcome to discuss the matter. It is
+expected that all discussion will adhere to the Code of Conduct rules.
+
+Other Discussion Venues
+~~~~~~~~~~~~~~~~~~~~~~~
+Occasionally decision proposals are presented off-list, e.g. at the semi-regular
+Contributors' Summit. While higher-bandwidth face-to-face discussion is often
+useful for quickly reaching consensus among attendees, generally we expect to
+summarize the discussion in notes that can later be presented on-list, so that
+the full community has opportunity to engage in discussion.
+
+Finalizing a Decision
+---------------------
+After a suitable period of time has passed, the maintainer will judge whether or
+not consensus has been reached. If so, the consensus decision will be
+implemented. Otherwise, discussion may continue, or the proposal may be
+abandoned.
+
+In general, it is not the maintainer's responsibility to implement any
+particular decision. For decisions that require code changes, it is often the
+case that the original proposer will make the necessary changes to implement the
+decision, although it is also common for other interested parties to provide an
+implementation.
+
+For non-technical decisions such as community norms or processes, it is up to
+the community as a whole to implement and sustain agreed-upon changes.
