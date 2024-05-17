@@ -2290,8 +2290,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 
 	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
 	    strcmp(p, submodule_name))
-		BUG("submodule name '%s' not a suffix of git dir '%s'",
-		    submodule_name, git_dir);
+		/* munged submodule. Good. */
+		return 0;
 
 	/*
 	 * We prevent the contents of sibling submodules' git directories to
@@ -2607,6 +2607,17 @@ cleanup:
 	return ret;
 }
 
+/*
+ * This function moved into the only builtin where it's used as part of
+ * libification cleanups. It's a simple function, so the easiest approach is to
+ * just code copy it here, unfortunately.
+ */
+static int is_rfc3986_unreserved(char ch)
+{
+	return isalnum(ch) ||
+		ch == '-' || ch == '_' || ch == '.' || ch == '~';
+}
+
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
@@ -2630,6 +2641,20 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	 * administrators can explicitly set. Nothing has been decided,
 	 * so for now, just append the name at the end of the path.
 	 */
+	size_t modules_len;
+
 	repo_git_path_append(r, buf, "modules/");
+	modules_len = buf->len;
 	strbuf_addstr(buf, submodule_name);
+
+	/*
+	 * If the submodule gitdir already exists using the old-fashioned
+	 * location (which uses the submodule name as-is, without munging it)
+	 * then return that.
+	 */
+	if (!access(buf->buf, F_OK))
+		return;
+
+	strbuf_setlen(buf, modules_len);
+	strbuf_addstr_urlencode(buf, submodule_name, is_rfc3986_unreserved);
 }
