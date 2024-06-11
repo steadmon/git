@@ -290,11 +290,7 @@ static inline int is_xplatform_dir_sep(int c)
 #include <netdb.h>
 #include <pwd.h>
 #include <sys/un.h>
-#ifndef NO_INTTYPES_H
-#include <inttypes.h>
-#else
-#include <stdint.h>
-#endif
+#include "int-types-util.h"
 #ifdef HAVE_ARC4RANDOM_LIBBSD
 #include <bsd/stdlib.h>
 #endif
