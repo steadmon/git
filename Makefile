@@ -1199,6 +1199,7 @@ LIB_OBJS += userdiff.o
 LIB_OBJS += utf8.o
 LIB_OBJS += varint.o
 LIB_OBJS += version.o
+LIB_OBJS += version2.o
 LIB_OBJS += versioncmp.o
 LIB_OBJS += walker.o
 LIB_OBJS += wildmatch.o
@@ -2439,13 +2440,16 @@ PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
 pager.sp pager.s pager.o: EXTRA_CPPFLAGS = \
 	-DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
 
-version.sp version.s version.o: GIT-VERSION-FILE GIT-USER-AGENT
-version.sp version.s version.o: EXTRA_CPPFLAGS = \
+version.sp version.s version.o version2.o: GIT-VERSION-FILE GIT-USER-AGENT
+version.sp version.s version.o version2.o: EXTRA_CPPFLAGS = \
 	'-DGIT_VERSION="$(GIT_VERSION)"' \
 	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)' \
 	'-DGIT_BUILT_FROM_COMMIT="$(shell \
 		GIT_CEILING_DIRECTORIES="$(CURDIR)/.." \
 		git rev-parse -q --verify HEAD 2>/dev/null)"'
+
+libmygit.a: version2.o
+	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
