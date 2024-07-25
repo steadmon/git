@@ -31,6 +31,36 @@ int libgit_parse_maybe_bool(const char *val)
 	return git_parse_maybe_bool(val);
 }
 
+struct config_set *libgit_configset_alloc(void)
+{
+	return git_configset_alloc();
+}
+
+void libgit_configset_clear_and_free(struct config_set *cs)
+{
+	git_configset_clear_and_free(cs);
+}
+
+void libgit_configset_init(struct config_set *cs)
+{
+	git_configset_init(cs);
+}
+
+int libgit_configset_add_file(struct config_set *cs, const char *filename)
+{
+	return git_configset_add_file(cs, filename);
+}
+
+int libgit_configset_get_int(struct config_set *cs, const char *key, int *dest)
+{
+	return git_configset_get_int(cs, key, dest);
+}
+
+int libgit_configset_get_string(struct config_set *cs, const char *key, char **dest)
+{
+	return git_configset_get_string(cs, key, dest);
+}
+
 const char *libgit_user_agent(void)
 {
 	return git_user_agent();
